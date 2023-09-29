@@ -1,7 +1,8 @@
-package org.woki.knm.knm.events;
+package org.woki.knm.events;
 
-import org.woki.knm.knm.GameSession;
+import org.woki.knm.entity.GameSession;
 
+import java.util.List;
 import java.util.Random;
 
 public class Chest implements Event {
@@ -16,21 +17,23 @@ public class Chest implements Event {
     }
 
     @Override
-    public void playEvent() {
+    public List<String> playEvent() {
         int randomRation = (new Random()).nextInt(2);
         switch (randomRation) {
             case 1:
                 session.setAttackBonus(session.getAttackBonus() + 5);
-                System.out.println(ATTACK_ITEM_BONUS_MESSAGE);
+                gameMessages.add(ATTACK_ITEM_BONUS_MESSAGE);
                 break;
             case 2:
                 session.setDefenceBonus(session.getDefenceBonus() + 5);
-                System.out.println(DEFENSE_ITEM_BONUS_MESSAGE);
+                gameMessages.add(DEFENSE_ITEM_BONUS_MESSAGE);
                 break;
             default:
-                System.out.println(CHEST_IS_EMPTY_MESSAGE);
+                gameMessages.add(CHEST_IS_EMPTY_MESSAGE);
                 break;
         }
+
+        return gameMessages;
     }
 
 }

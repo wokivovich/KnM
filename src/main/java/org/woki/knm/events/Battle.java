@@ -1,9 +1,9 @@
-package org.woki.knm.knm.events;
+package org.woki.knm.events;
 
-import org.woki.knm.knm.GameSession;
-import org.woki.knm.knm.entity.Creature;
-import org.woki.knm.knm.entity.Monster;
-import org.woki.knm.knm.entity.Player;
+import org.woki.knm.entity.Creature;
+import org.woki.knm.entity.GameSession;
+import org.woki.knm.entity.Monster;
+import org.woki.knm.entity.Player;
 
 import java.util.ArrayDeque;
 import java.util.List;
@@ -18,6 +18,7 @@ public class Battle implements Event {
     private static final int HEAL_LIMIT = 4;
     private static final int HP_LEVEL_WHEN_START_HEALING = 70;
     private static final int HP_LEVEL_WHEN_CREATURE_DEFEAT = 0;
+    private static final String HEALING_MESSAGE= "Вы немного восстановили здоровье";
 
     public Battle(GameSession session, Player player, List<Monster> monsters) {
         this.session = session;
@@ -26,7 +27,7 @@ public class Battle implements Event {
     }
 
     @Override
-    public void playEvent() {
+    public List<String> playEvent() {
         ArrayDeque<Monster> monstersDeque = generateMonsterList(session, monsters);
         int healLimit = HEAL_LIMIT;
 
@@ -38,13 +39,13 @@ public class Battle implements Event {
                 if (healLimit > 0 && player.getHealth() > HP_LEVEL_WHEN_START_HEALING) {
                     heal(player);
                     healLimit--;
-                    System.out.println("Вы немного восстановили здоровье");
+                    gameMessages.add(HEALING_MESSAGE);
                 }
                 attack(player, monster);
 
                 if (monster.getHealth() <= 0) {
                     monsterIsAlive = false;
-                    System.out.println(monster.getName() + " побежден.");
+                    gameMessages.add(monster.getName() + " побежден.");
                     if (monster.getName().equals("Лич")) {
                         session.setBossIsDead(true);
                     }
@@ -58,6 +59,7 @@ public class Battle implements Event {
                 }
             }
         }
+        return gameMessages;
     }
 
     private void attack(Creature attacking, Creature defending) {
@@ -68,10 +70,10 @@ public class Battle implements Event {
 
         if (cubeResult > 4) {
             int damage = (new Random()).nextInt(attacking.getMinDamage(), attacking.getMaxDamage()) + attackModify;
-            System.out.println(defending.getName() + " получает " + damage + " урона");
+            gameMessages.add(defending.getName() + " получает " + damage + " урона");
             defending.setHealth(defending.getHealth() - damage);
         } else {
-            System.out.println(defending.getName() + " промахивается.");
+            gameMessages.add(defending.getName() + " промахивается.");
         }
     }
 
@@ -97,6 +99,9 @@ public class Battle implements Event {
                 monstersDeque.add(monsters.get(2));
                 break;
             case 7:
+                monstersDeque.add(monsters.get(0));
+                monstersDeque.add(monsters.get(0));
+                monstersDeque.add(monsters.get(1));
                 monstersDeque.add(monsters.get(3));
                 break;
         }

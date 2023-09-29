@@ -1,4 +1,4 @@
-package org.woki.knm.knm.entity;
+package org.woki.knm.entity;
 
 public class Monster extends Creature {
 

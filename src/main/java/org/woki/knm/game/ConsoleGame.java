@@ -1,17 +1,22 @@
-package org.woki.knm.knm;
+package org.woki.knm.game;
 
-import org.woki.knm.knm.entity.Monster;
-import org.woki.knm.knm.entity.Player;
-import org.woki.knm.knm.events.Battle;
-import org.woki.knm.knm.events.Chest;
-import org.woki.knm.knm.events.Event;
-import org.woki.knm.knm.events.SafeRoom;
-import org.woki.knm.knm.mechanic.CreaturesFactory;
+import org.woki.knm.entity.GameSession;
+import org.woki.knm.entity.Player;
+import org.woki.knm.events.Battle;
+import org.woki.knm.events.Chest;
+import org.woki.knm.events.Event;
+import org.woki.knm.entity.TypeOfRoom;
+import org.woki.knm.entity.Monster;
+import org.woki.knm.events.SafeRoom;
+import org.woki.knm.util.CreaturesFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Game {
+public class ConsoleGame implements Gameplay{
+
+    private final List<String> gameMessages = new ArrayList<>();
 
     private static final int STARTING_DIFFICULT = 1;
     private static final int STARTING_ATTACK_BONUS = 1;
@@ -19,6 +24,8 @@ public class Game {
     private static final int CHANCE_TO_FACE_WITH_MONSTER = 6;
     private static final int CHANCE_THAT_ROOM_IS_SAFE = 8;
     private static final int EVENT_CHANCE_RANGE = 10;
+    private static final String INTRO_MESSAGE = "Старейшина сказал, что здесь я смогу найти амулет... " +
+            "Похоже эти старые двери давно не открывались.";
     private static final String VICTORY_MESSAGE = "Победа! Это было сложно, но лич побежден... " +
             "За ним есть небольшой постамент. Ура! Амулет у меня!";
     private static final String DEFEAT_MESSAGE = "Факел гаснет... Вас врядли смогут отыскать... " +
@@ -33,49 +40,61 @@ public class Game {
             "Странно... Факел не справляется с тьмой... Почему так холодно?"
     };
 
-
-    public void startGame() throws InterruptedException {
+    public GameSession createGameSession() {
         CreaturesFactory factory = new CreaturesFactory();
         Player player = factory.createPlayer();
+        List<Monster> monsters = factory.createMonstersList();
         GameSession session = GameSession.builder()
+                .player(player)
+                .monsters(monsters)
                 .difficult(STARTING_DIFFICULT)
                 .playerIsAlive(true)
                 .bossIsDead(false)
                 .attackBonus(STARTING_ATTACK_BONUS)
                 .defenceBonus(STARTING_DEFENSE_BONUS)
                 .build();
-        System.out.println("Старейшина сказал, что здесь я смогу найти амулет... " +
-                "Похоже эти старые двери давно не открывались.");
+        gameMessages.add(INTRO_MESSAGE);
+        return session;
+    }
 
-        List<Monster> monsters = factory.createMonstersList();
+    public boolean enterTheRoom(GameSession session) {
+        Player player = session.getPlayer();
+        List<Monster> monsters = session.getMonsters();
 
-        while(session.isPlayerIsAlive() & !session.isBossIsDead()) {
-            TypeOfRoom typeOfRoom = getTypeOfRoom();
-            Thread.sleep(1000);
-            switch (typeOfRoom) {
-                case CHEST:
-                    Event chest = new Chest(session);
-                    chest.playEvent();
-                case MONSTER:
-                    Event battle = new Battle(session, player, monsters);
-                    battle.playEvent();
-                    if (!session.isBossIsDead()) {
-                        System.out.println(difficultIncreaseMessage(session));
-                        session.setDifficult(session.getDifficult() + 1);
-                    }
-                case SAFE:
-                    Event safeRoom = new SafeRoom();
-                    safeRoom.playEvent();
-            }
-
+        TypeOfRoom typeOfRoom = getTypeOfRoom();
+        switch (typeOfRoom) {
+            case CHEST:
+                Event chest = new Chest(session);
+                gameMessages.addAll(chest.playEvent());
+            case MONSTER:
+                Event battle = new Battle(session, player, monsters);
+                gameMessages.addAll(battle.playEvent());
+                if (!session.isBossIsDead()) {
+                    gameMessages.add(difficultIncreaseMessage(session));
+                    session.setDifficult(session.getDifficult() + 1);
+                }
+            case SAFE:
+                Event safeRoom = new SafeRoom();
+                gameMessages.addAll(safeRoom.playEvent());
         }
 
-        if (session.isPlayerIsAlive()) {
-            System.out.println(VICTORY_MESSAGE);
+        if (session.isBossIsDead()) {
+            gameMessages.add(VICTORY_MESSAGE);
+
+            return false;
+        } else if (!session.isPlayerIsAlive()) {
+            gameMessages.add(DEFEAT_MESSAGE);
+
+            return false;
         } else {
-            System.out.println(DEFEAT_MESSAGE);
-        }
 
+            return true;
+        }
+    }
+
+    public void getGameMessage(View view) {
+        view.getGameView(gameMessages);
+        gameMessages.clear();
     }
 
     private String difficultIncreaseMessage(GameSession session) {

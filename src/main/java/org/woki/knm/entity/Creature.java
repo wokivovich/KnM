@@ -1,6 +1,6 @@
-package org.woki.knm.knm.entity;
+package org.woki.knm.entity;
 
-import org.woki.knm.knm.exception.CreatureCreationException;
+import org.woki.knm.exception.CreatureCreationException;
 
 public class Creature {
 

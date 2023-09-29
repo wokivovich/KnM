@@ -1,7 +1,7 @@
-package org.woki.knm.knm.mechanic;
+package org.woki.knm.util;
 
-import org.woki.knm.knm.entity.Monster;
-import org.woki.knm.knm.entity.Player;
+import org.woki.knm.entity.Player;
+import org.woki.knm.entity.Monster;
 
 import java.util.List;
 
